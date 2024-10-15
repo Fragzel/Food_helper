@@ -1,0 +1,8 @@
+.inputStyle {
+    margin-bottom: 10px;
+    width: 15vw;
+    height: 3vh;
+    border-radius: 15px;
+    padding-left: 15px;
+    border: 1px solid orange;
+}
