@@ -3,6 +3,25 @@ var router = express.Router();
 const Recipe = require('../models/recipe')
 const User = require("../models/users")
 
+router.get('/likeList/:username', async (req, res) => {
+  try {
+    let findUser = await User.findOne({ username: req.params.username });
+    if (!findUser) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+    if (findUser.likedRecipes.length > 0) {
+      const userLikedRecipes = await findUser.populate('likedRecipes');
+
+      res.json({ response: userLikedRecipes.likedRecipes });
+    } else {
+      res.json({ message: 'No recipes found' });
+    }
+  } catch (error) {
+    console.error('Erreur :', error); // Log error
+    res.status(500).json({ message: 'Une erreur est survenue' });
+  }
+});
+
 router.get('/:research/:page', async (req, res) => {
   const options = {
     method: 'GET',
@@ -63,7 +82,7 @@ router.get('/:research/:page', async (req, res) => {
 
         // Construire l'objet de la recette
         recipesInfos.push({
-          id: recipe.id,
+          id_recipe_tasty: recipe.id,
           name: recipe.name,
           image: recipe.thumbnail_url,
           ingredients: ingredientsList,
@@ -93,14 +112,14 @@ router.post('/like', async (req, res) => {
   try {
     const { recipe, username } = req.body;
 
-    const existingRecipe = await Recipe.findOne({ id_recipe_tasty: recipe.id });
+    const existingRecipe = await Recipe.findOne({ id_recipe_tasty: recipe.id_recipe_tasty });
 
     let savedRecipe;
     if (existingRecipe) {
       savedRecipe = existingRecipe; // Utiliser la recette existante
     } else {
       const newRecipe = new Recipe({
-        id_recipe_tasty: recipe.id,
+        id_recipe_tasty: recipe.id_recipe_tasty,
         name: recipe.name,
         image: recipe.image,
         ingredients: recipe.ingredients,
@@ -156,23 +175,41 @@ router.post('/like', async (req, res) => {
   }
 });
 
-router.get('/likeList/:username', async (req, res) => {
+router.put('/update', async (req, res) => {
+  console.log(req.body.editableRecipe);
+  const { editableRecipe, username, token } = req.body;
+
   try {
-    console.log('coucou'); // Log de débogage
-    const findUser = await User.findOne({ username: req.params.username });
-
+    const findUser = await User.findOne({ username: username, token: token });
     if (!findUser) {
-      console.log('Utilisateur non trouvé');
-      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+      return res.status(404).json({ message: "Utilisateur non trouvé" })
     }
+    editableRecipe = {
+      id_recipe_tasty: editableRecipe.id_recipe_tasty,
+      name: editableRecipe.name,
+      image: editableRecipe.image,
+      ingredients: editableRecipe.ingredients,
+      instructions: editableRecipe.instructions,
+      cook_time: editableRecipe.cook_time,
+      prep_time_minutes: editableRecipe.prep_time_minutes,
+      num_servings: editableRecipe.num_servings,
+      price: {
+        total: editableRecipe.price.total,
+        portion: editableRecipe.price.portion,
+      },
+    };
+    savedRecipe = await editableRecipe.save();
 
-    console.log('Utilisateur trouvé:', findUser); // Log de l'utilisateur trouvé
-    res.json({ message: findUser });
+
+
+
+
   } catch (error) {
-    console.error('Erreur :', error); // Log de l'erreur
-    res.status(500).json({ message: 'Une erreur est survenue' });
+    console.error(error);
+    res.status(500).json({ userLikedRecipes: [] });
   }
-});
+
+})
 
 
 module.exports = router;

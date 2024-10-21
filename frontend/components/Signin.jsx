@@ -15,8 +15,6 @@ const signInFields = [
         name: "password",
         type: "password",
         required: true
-
-
     },
 ];
 
@@ -33,8 +31,7 @@ function SignIn() {
             body: JSON.stringify(formData)
         });
         const response = await request.json()
-        const test = "coucou"
-        console.log(response)
+
 
         if (response.result) {
             dispatch(updateUserRedux({ token: response.token, username: formData.username, likedRecipes: response.id_tasty_recipes }))

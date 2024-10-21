@@ -15,11 +15,13 @@ router.post('/signUp', async (req, res) => {
         res.json({ result: false, error: "L'utilisateur existe déjà" })
         return
     }
+    const token = jwt.sign({ username: username }, JWT_SECRET, { expiresIn: '1h' })
 
     const hash = bcrypt.hashSync(password, 10);
     const newUser = new User({
         username,
         email,
+        token,
         password: hash
     })
     newUser.save()
