@@ -55,14 +55,17 @@ function Home() {
 
   const openModal = (recipe) => {
     setSelectedRecipe(recipe); // Définit la recette sélectionnée pour l'affichage en lecture
-    setEditableRecipe(null); // Réinitialise les champs modifiables
+    setEditableRecipe({ ...recipe }); // Initialise les champs modifiables avec les données de la recette
     setIsModalOpen(true);
     setIsEditing(false); // Désactive le mode édition par défaut
   };
 
+
   const closeModal = () => {
     setIsModalOpen(false);
-    setSelectedRecipe(null); // Réinitialise la recette sélectionnée
+    setSelectedRecipe(null);
+    fetchUserLikedRecipes()
+    // Réinitialise la recette sélectionnée
   };
 
   const handleModalClick = (event) => {
@@ -88,10 +91,10 @@ function Home() {
   useEffect(() => {
     if (isFirstRender) {
       setIsFirstRender(false);
-    } else {
-      fetchApiRecipes();
     }
   }, [page]);
+
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -174,6 +177,7 @@ function Home() {
                   <input
                     type="text"
                     name="name"
+                    placeHolder={editableRecipe.name}
                     value={editableRecipe.name}
                     onChange={handleInputChange}
                     className={styles.editableInput}
@@ -182,7 +186,7 @@ function Home() {
                   selectedRecipe.name
                 )}
               </h2>
-              <img src={selectedRecipe.image} alt={selectedRecipe.name} />
+              <img src={selectedRecipe.image} alt={selectedRecipe.name} className={styles.image} />
               <div className={styles.details}>
                 <div className={styles.timeInfo}>
                   {isEditing ? (
@@ -220,25 +224,65 @@ function Home() {
                     </>
                   ) : (
                     <>
-                      <p>Preparation time: <strong>{selectedRecipe.prep_time_minutes} minutes</strong></p>
-                      <p>Cook time: <strong>{selectedRecipe.cook_time} minutes</strong></p>
-                      <p>Total time: <strong>{selectedRecipe.total_time_minutes} minutes</strong></p>
+                      <p>Preparation time : {selectedRecipe.prep_time_minutes ? <strong>{selectedRecipe.prep_time_minutes} minutes</strong> : <strong>Non Disponible</strong>} </p>
+                      <p>Cook time : {selectedRecipe.cook_time ? <strong>{selectedRecipe.cook_time} minutes</strong> : <strong>Non Disponible</strong>} </p>
+                      <p>Total time : {selectedRecipe.total_time_minutes ? <strong>{selectedRecipe.total_time_minutes} minutes</strong> : <strong>Non Disponible</strong>} </p>
                     </>
                   )}
                 </div>
-                <Like recipeInfos={selectedRecipe} handleLike={handleLike} />
-                <FontAwesomeIcon
+
+                {!isEditing && <Like recipeInfos={selectedRecipe} handleLike={handleLike} />}
+                {!isEditing && <FontAwesomeIcon
                   icon={faPen}
                   size={"2x"}
                   style={{ color: "purple", cursor: "pointer", marginLeft: "10px" }}
                   onClick={personnalRecipe}
-                />
+                />}
                 {selectedRecipe.price && (
                   <div>
                     <div className={styles.price}></div>
-                    <p>Number of servings: <strong>{selectedRecipe.num_servings || 'Non disponible'}</strong></p>
-                    <p>Total price: <strong>{(selectedRecipe.price.total / 100).toFixed(2)}€</strong></p>
+                    {isEditing ? (
+                      <>
+                        <p>
+                          Number of servings :
+                          <input
+                            type="number"
+                            name="num_servings"
+                            value={editableRecipe.num_servings || ''}
+                            onChange={handleInputChange}
+                            className={styles.editableInput}
+                          />
+                        </p>
+                        <p>
+                          Total price  :
+                          <input
+                            type="number"
+                            name="price"
+                            step="0.01" // pour gérer les décimales
+                            value={(editableRecipe.price.total / 100).toFixed(2) || ''}
+                            onChange={(e) => {
+                              const priceInCents = parseFloat(e.target.value) * 100; // Conversion en centimes
+                              setEditableRecipe((prevRecipe) => ({
+                                ...prevRecipe,
+                                price: { total: priceInCents }, // Mise à jour du prix
+                              }));
+                            }}
+                            className={styles.editableInput}
+                          />
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p>Number of servings: <strong>{selectedRecipe.num_servings || 'Non disponible'}</strong></p>
+                        <p>Total price: <strong>{(selectedRecipe.price.total / 100).toFixed(2)}€</strong></p>
+                      </>
+                    )}
                   </div>
+                )}
+                {isEditing && (
+                  <button className={styles.saveButton} onClick={handleSaveRecipe}>
+                    Save Changes
+                  </button>
                 )}
               </div>
             </div>
@@ -246,71 +290,130 @@ function Home() {
               <div className={styles.ingredients}>
                 <h3 className={styles.sectionTitle}>Ingrédients</h3>
                 <ul className={styles.ingredientsList}>
-                  {selectedRecipe.ingredients && selectedRecipe.ingredients.length > 0 ? (
-                    selectedRecipe.ingredients.map((ingredient, index) => (
-                      <li key={index}>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            name={`ingredient-${index}`}
-                            value={editableRecipe.ingredients[index]}
-                            onChange={(e) => {
-                              const updatedIngredients = [...editableRecipe.ingredients];
-                              updatedIngredients[index] = e.target.value;
-                              setEditableRecipe((prevRecipe) => ({
-                                ...prevRecipe,
-                                ingredients: updatedIngredients,
-                              }));
-                            }}
-                            className={styles.editableInput}
-                          />
-                        ) : (
-                          ingredient
-                        )}
+                  {editableRecipe?.ingredients && editableRecipe.ingredients.length > 0 ? (
+                    editableRecipe.ingredients.map((ingredient, index) => (
+                      <li key={index} className={styles.ingredientItem}> {/* Remplacer <ul> par <li> ici */}
+                        <div className={styles.ingredientContainer}>
+                          {isEditing && (
+                            <button
+                              className={styles.deleteButton}
+                              onClick={() => {
+                                const updatedIngredients = editableRecipe.ingredients.filter((_, i) => i !== index); // Supprimer l'élément
+                                setEditableRecipe((prevRecipe) => ({
+                                  ...prevRecipe,
+                                  ingredients: updatedIngredients,
+                                }));
+                              }}
+                            >
+                              −
+                            </button>
+                          )}
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              name={`ingredient-${index}`}
+                              value={ingredient || ''}
+                              onChange={(e) => {
+                                const updatedIngredients = [...editableRecipe.ingredients];
+                                updatedIngredients[index] = e.target.value;
+                                setEditableRecipe((prevRecipe) => ({
+                                  ...prevRecipe,
+                                  ingredients: updatedIngredients,
+                                }));
+                              }}
+                              className={styles.editableIngrediantsInput}
+                            />
+                          ) : (
+                            <span>{ingredient}</span>
+                          )}
+                        </div>
                       </li>
                     ))
                   ) : (
-                    <li>Ingrédients non disponibles</li>
+                    <li>Aucun ingrédient disponible</li>
                   )}
                 </ul>
+
+                {isEditing && (
+                  <button
+                    className={styles.addButton}
+                    onClick={() => {
+                      setEditableRecipe((prevRecipe) => ({
+                        ...prevRecipe,
+                        ingredients: [...(prevRecipe.ingredients || []), ''], // Ajouter un ingrédient vide
+                      }));
+                    }}
+                  >
+                    +
+                  </button>
+                )}
               </div>
+
+
               <div className={styles.instructions}>
                 <h3 className={styles.sectionTitle}>Instructions</h3>
                 <ul className={styles.instructionsList}>
-                  {selectedRecipe.instructions && selectedRecipe.instructions.length > 0 ? (
-                    selectedRecipe.instructions.map((instruction, index) => (
-                      <li key={index}>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            name={`instruction-${index}`}
-                            value={editableRecipe.instructions[index]}
-                            onChange={(e) => {
-                              const updatedInstructions = [...editableRecipe.instructions];
-                              updatedInstructions[index] = e.target.value;
-                              setEditableRecipe((prevRecipe) => ({
-                                ...prevRecipe,
-                                instructions: updatedInstructions,
-                              }));
-                            }}
-                            className={styles.editableInput}
-                          />
-                        ) : (
-                          instruction
-                        )}
+                  {editableRecipe?.instructions && editableRecipe.instructions.length > 0 ? (
+                    editableRecipe.instructions.map((instruction, index) => (
+                      <li key={index} className={styles.instructionItem}>
+                        <div className={styles.instructionContainer}>
+                          {isEditing && (
+                            <button
+                              className={styles.deleteButton}
+                              onClick={() => {
+                                const updatedInstructions = editableRecipe.instructions.filter((_, i) => i !== index); // Supprimer l'instruction
+                                setEditableRecipe((prevRecipe) => ({
+                                  ...prevRecipe,
+                                  instructions: updatedInstructions,
+                                }));
+                              }}
+                            >
+                              −
+                            </button>
+                          )}
+                          {isEditing ? (
+                            <textarea
+                              type="text"
+                              name={`instruction-${index}`}
+                              value={instruction || ''}
+                              onChange={(e) => {
+                                const updatedInstructions = [...editableRecipe.instructions];
+                                updatedInstructions[index] = e.target.value;
+                                setEditableRecipe((prevRecipe) => ({
+                                  ...prevRecipe,
+                                  instructions: updatedInstructions,
+                                }));
+                              }}
+                              className={styles.editableInput}
+                            />
+                          ) : (
+                            <span>{instruction}</span>
+                          )}
+                        </div>
                       </li>
                     ))
                   ) : (
-                    <li>Instructions non disponibles</li>
+                    <li>Aucune instruction disponible</li>
                   )}
+
                 </ul>
+                {isEditing && (
+                  <button
+                    className={styles.addButton}
+                    onClick={() => {
+                      setEditableRecipe((prevRecipe) => ({
+                        ...prevRecipe,
+                        instructions: [...(prevRecipe.instructions || []), ''], // Ajouter une instruction vide
+                      }));
+                    }}
+                  >
+                    +
+                  </button>
+                )}
               </div>
+
             </div>
-            {isEditing && (
-              <button className={styles.saveButton} onClick={handleSaveRecipe}>
-                Save Changes
-              </button>
-            )}
+
           </div>
         </div>
       )}

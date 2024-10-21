@@ -176,15 +176,14 @@ router.post('/like', async (req, res) => {
 });
 
 router.put('/update', async (req, res) => {
-  console.log(req.body.editableRecipe);
-  const { editableRecipe, username, token } = req.body;
+  let { editableRecipe, username, token } = req.body;
 
   try {
     const findUser = await User.findOne({ username: username, token: token });
     if (!findUser) {
       return res.status(404).json({ message: "Utilisateur non trouvé" })
     }
-    editableRecipe = {
+    await Recipe.updateOne({ _id: editableRecipe._id }, {
       id_recipe_tasty: editableRecipe.id_recipe_tasty,
       name: editableRecipe.name,
       image: editableRecipe.image,
@@ -197,10 +196,9 @@ router.put('/update', async (req, res) => {
         total: editableRecipe.price.total,
         portion: editableRecipe.price.portion,
       },
-    };
-    savedRecipe = await editableRecipe.save();
+    });
 
-
+    res.json({ success: true, message: "Recette mise à jour avec succès" });
 
 
 

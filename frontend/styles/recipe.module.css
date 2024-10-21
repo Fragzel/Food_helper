@@ -18,9 +18,9 @@
     height: 60%;
     box-sizing: content-box;
     padding-top: 1%;
-    border-radius: 50px;
     cursor: pointer;
     margin-bottom: 1%;
+    object-fit: contain
 }
 
 .name {

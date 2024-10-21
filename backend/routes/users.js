@@ -34,7 +34,7 @@ router.post("/signIn", async (req, res) => {
 
     const { username, password } = req.body;
 
-    const user = await User.findOne({ username: username });
+    let user = await User.findOne({ username: username });
     if (!user) {
         return res.status(400).json({ message: "Nom d'utilisateur ou mot de passe incorrect" });
     }
@@ -45,6 +45,8 @@ router.post("/signIn", async (req, res) => {
 
     const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '1h' });
 
+    user.token = token;
+    await user.save();
     res.json({ result: true, token, id_tasty_recipes: user.id_tasty_recipes });
 })
 
