@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styles from "../styles/welcome.module.css";
-import SignUp from "../components/SignUp";
+import SignUp from "../components/Signup";
 import SignIn from "../components/SignIn";
 
 function Welcome() {

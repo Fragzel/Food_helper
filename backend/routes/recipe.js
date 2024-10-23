@@ -14,7 +14,7 @@ router.get('/likeList/:username', async (req, res) => {
 
       res.json({ response: userLikedRecipes.likedRecipes });
     } else {
-      res.json({ message: 'No recipes found' });
+      res.json({ response: 'No recipes found' });
     }
   } catch (error) {
     console.error('Erreur :', error); // Log error
@@ -126,6 +126,7 @@ router.post('/like', async (req, res) => {
         instructions: recipe.instructions,
         cook_time: recipe.cook_time,
         prep_time_minutes: recipe.prep_time_minutes,
+        total_time: recipe.total_time_minutes,
         num_servings: recipe.num_servings,
         price: {
           total: recipe.price.total,
@@ -183,8 +184,19 @@ router.put('/update', async (req, res) => {
     if (!findUser) {
       return res.status(404).json({ message: "Utilisateur non trouvé" })
     }
+    console.log(editableRecipe.id_recipe_tasty)
+    const newLikedRecipeTasty = findUser.id_tasty_recipes.filter(e => e !== editableRecipe.id_recipe_tasty);
+
+    console.log(newLikedRecipeTasty)
+    await User.updateOne({ username: username },
+      {
+        id_tasty_recipes: newLikedRecipeTasty
+      }
+    )
+
+
     await Recipe.updateOne({ _id: editableRecipe._id }, {
-      id_recipe_tasty: editableRecipe.id_recipe_tasty,
+      id_recipe_tasty: 0,
       name: editableRecipe.name,
       image: editableRecipe.image,
       ingredients: editableRecipe.ingredients,
@@ -198,7 +210,7 @@ router.put('/update', async (req, res) => {
       },
     });
 
-    res.json({ success: true, message: "Recette mise à jour avec succès" });
+    res.json({ success: true, userId_recipe_tasty: findUser.id_tasty_recipes });
 
 
 
@@ -208,6 +220,30 @@ router.put('/update', async (req, res) => {
   }
 
 })
+
+router.delete('/delete', async (req, res) => {
+  let { recipe, username, token } = req.body;
+  console.log(recipe.id_recipe_tasty)
+  try {
+    const findUser = await User.findOne({ username: username, token: token });
+    if (!findUser) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" })
+    }
+    const newLikedRecipe = findUser.likedRecipes.filter(e => e.toString() !== recipe._id.toString());
+    findUser.likedRecipes = newLikedRecipe;
+
+    findUser.save()
+    await Recipe.deleteOne({ _id: recipe._id })
+    res.json({ success: true, userId_recipe_tasty: findUser.id_tasty_recipes });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ userLikedRecipes: [] });
+  }
+})
+
+
+
 
 
 module.exports = router;

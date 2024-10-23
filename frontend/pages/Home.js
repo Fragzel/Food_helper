@@ -5,11 +5,13 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateLike } from '../reducers/user';
 import Header from '../components/Header';
-import { faPen } from '@fortawesome/free-solid-svg-icons'
+import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Router } from 'next/router';
 
 function Home() {
   const [recipeList, setRecipeList] = useState([]);
+  const [userRecipeList, setUserRecipeList] = useState([])
   const [researchInput, setResearchInput] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState(null); // Utilisé pour afficher la recette sélectionnée
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,7 +27,6 @@ function Home() {
   const fetchApiRecipes = async () => {
     const request = await fetch(`http://localhost:3000/recipe/${researchInput}/${page}`);
     const response = await request.json();
-    setRecipeList([]);
     response && setRecipeList(response);
   };
 
@@ -33,18 +34,17 @@ function Home() {
     try {
       const request = await fetch(`http://localhost:3000/recipe/likeList/${user.username}`);
       const response = await request.json();
-      setRecipeList([]);
+      setUserRecipeList([]);
       setIsOnPage("MyRecipes");
-      response.response ? setRecipeList(response.response) : setRecipeList("No recipes found");
+      response.response ? setUserRecipeList(response.response) : setUserRecipeList("No recipes found");
     } catch (error) {
       console.error('Erreur lors du fetch:', error);
     }
   };
 
   const returnToHome = () => {
-    setRecipeList([]);
     setIsOnPage("Home");
-    setPage(0);
+
   };
 
   const handleSearchKeyDown = (event) => {
@@ -64,8 +64,7 @@ function Home() {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedRecipe(null);
-    fetchUserLikedRecipes()
-    // Réinitialise la recette sélectionnée
+
   };
 
   const handleModalClick = (event) => {
@@ -114,6 +113,10 @@ function Home() {
       });
       const response = await request.json();
       if (response.success) {
+        let updatedRecipeList = response.userId_recipe_tasty.filter(e => e !== editableRecipe.id_recipe_tasty);
+
+        console.log(updatedRecipeList)
+        // dispatch(updateLike(updatedRecipeList)); // Met à jour les recettes aimées
         setSelectedRecipe(editableRecipe); // Met à jour la recette avec les modifications
         setIsEditing(false); // Désactive le mode édition après la sauvegarde
       }
@@ -126,6 +129,19 @@ function Home() {
     setEditableRecipe({ ...selectedRecipe }); // Cloner la recette actuelle pour l'édition
     setIsEditing(true); // Activer le mode édition
   };
+
+  const deleteRecipe = async (recipe) => {
+    console.log("coucou")
+    const request = await fetch(`http://localhost:3000/recipe/delete`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recipe: recipe, username: user.username, token: user.token }),
+    });
+    const response = await request.json();
+    dispatch(updateLike(response.userLikedRecipes));
+    closeModal()
+  }
+
 
   return (
     <main className={isOnPage === "Home" ? styles.mainHome : styles.mainMyrecipes}>
@@ -141,6 +157,7 @@ function Home() {
                 onImageClick={() => openModal(recipe)}
                 recipeInfos={recipe}
                 handleLike={handleLike}
+                deleteRecipe={deleteRecipe}
               />
             ))
             : researchInput && <span className={styles.noRecipe}>No recipes found</span>}
@@ -149,18 +166,23 @@ function Home() {
 
       {isOnPage === "MyRecipes" && (
         <div className={styles.content}>
-          {recipeList !== "No recipes found"
-            ? recipeList.map((recipe, i) => (
-              <Recipe
-                key={i}
-                name={recipe.name}
-                image={recipe.image}
-                onImageClick={() => openModal(recipe)}
-                recipeInfos={recipe}
-                handleLike={handleLike}
-              />
-            ))
-            : researchInput && <span className={styles.noRecipe}>No recipe liked</span>}
+          {userRecipeList !== "No recipes found"
+            ? userRecipeList
+              .slice()  // Créer une copie de la liste pour ne pas muter l'original
+              .reverse()  // Inverser l'ordre des recettes
+              .map((recipe, i) => (
+                <Recipe
+                  key={i}
+                  name={recipe.name}
+                  image={recipe.image}
+                  onImageClick={() => openModal(recipe)}
+                  recipeInfos={recipe}
+                  handleLike={handleLike}
+                  deleteRecipe={deleteRecipe}
+                />
+              ))
+            : <span className={styles.noRecipe}>No liked recipe for this user</span>}
+
         </div>
       )}
       <div className={styles.buttons}>
@@ -226,18 +248,25 @@ function Home() {
                     <>
                       <p>Preparation time : {selectedRecipe.prep_time_minutes ? <strong>{selectedRecipe.prep_time_minutes} minutes</strong> : <strong>Non Disponible</strong>} </p>
                       <p>Cook time : {selectedRecipe.cook_time ? <strong>{selectedRecipe.cook_time} minutes</strong> : <strong>Non Disponible</strong>} </p>
-                      <p>Total time : {selectedRecipe.total_time_minutes ? <strong>{selectedRecipe.total_time_minutes} minutes</strong> : <strong>Non Disponible</strong>} </p>
+                      <p>Total time : {selectedRecipe.total_time ? <strong>{selectedRecipe.total_time} minutes</strong> : <strong>Non Disponible</strong>} </p>
                     </>
                   )}
                 </div>
 
-                {!isEditing && <Like recipeInfos={selectedRecipe} handleLike={handleLike} />}
+                {!isEditing && selectedRecipe.id_recipe_tasty !== 0 && <Like recipeInfos={selectedRecipe} handleLike={handleLike} />}
                 {!isEditing && <FontAwesomeIcon
                   icon={faPen}
                   size={"2x"}
-                  style={{ color: "purple", cursor: "pointer", marginLeft: "10px" }}
+                  style={{ color: "purple", cursor: "pointer" }}
                   onClick={personnalRecipe}
                 />}
+                {!isEditing && selectedRecipe.id_recipe_tasty === 0 &&
+                  <FontAwesomeIcon icon={faTrash}
+                    size={"2x"}
+                    cursor={"pointer"}
+                    onClick={() => deleteRecipe(selectedRecipe)}
+                  />}
+
                 {selectedRecipe.price && (
                   <div>
                     <div className={styles.price}></div>
@@ -258,13 +287,13 @@ function Home() {
                           <input
                             type="number"
                             name="price"
-                            step="0.01" // pour gérer les décimales
+                            step="0.01"
                             value={(editableRecipe.price.total / 100).toFixed(2) || ''}
                             onChange={(e) => {
-                              const priceInCents = parseFloat(e.target.value) * 100; // Conversion en centimes
+                              const priceInCents = parseFloat(e.target.value) * 100
                               setEditableRecipe((prevRecipe) => ({
                                 ...prevRecipe,
-                                price: { total: priceInCents }, // Mise à jour du prix
+                                price: { total: priceInCents }
                               }));
                             }}
                             className={styles.editableInput}
@@ -289,51 +318,54 @@ function Home() {
             <div className={styles.rightSection}>
               <div className={styles.ingredients}>
                 <h3 className={styles.sectionTitle}>Ingrédients</h3>
-                <ul className={styles.ingredientsList}>
-                  {editableRecipe?.ingredients && editableRecipe.ingredients.length > 0 ? (
+                {!isEditing ? (
+                  <ul className={styles.ingredientsList}>
+                    {selectedRecipe?.ingredients && selectedRecipe.ingredients.length > 0 ? (
+                      selectedRecipe.ingredients.map((ingredient, index) => (
+                        <li key={index} className={styles.ingredientItem}>
+                          <span>{ingredient}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li>Aucun ingrédient disponible</li>
+                    )}
+                  </ul>
+                ) : (
+                  editableRecipe?.ingredients && editableRecipe.ingredients.length > 0 ? (
                     editableRecipe.ingredients.map((ingredient, index) => (
-                      <li key={index} className={styles.ingredientItem}> {/* Remplacer <ul> par <li> ici */}
-                        <div className={styles.ingredientContainer}>
-                          {isEditing && (
-                            <button
-                              className={styles.deleteButton}
-                              onClick={() => {
-                                const updatedIngredients = editableRecipe.ingredients.filter((_, i) => i !== index); // Supprimer l'élément
-                                setEditableRecipe((prevRecipe) => ({
-                                  ...prevRecipe,
-                                  ingredients: updatedIngredients,
-                                }));
-                              }}
-                            >
-                              −
-                            </button>
-                          )}
-                          {isEditing ? (
-                            <input
-                              type="text"
-                              name={`ingredient-${index}`}
-                              value={ingredient || ''}
-                              onChange={(e) => {
-                                const updatedIngredients = [...editableRecipe.ingredients];
-                                updatedIngredients[index] = e.target.value;
-                                setEditableRecipe((prevRecipe) => ({
-                                  ...prevRecipe,
-                                  ingredients: updatedIngredients,
-                                }));
-                              }}
-                              className={styles.editableIngrediantsInput}
-                            />
-                          ) : (
-                            <span>{ingredient}</span>
-                          )}
-                        </div>
-                      </li>
+                      <div key={index} className={styles.ingredientContainer}>
+                        <button
+                          className={styles.deleteButton}
+                          onClick={() => {
+                            const updatedIngredients = editableRecipe.ingredients.filter((_, i) => i !== index); // Supprimer l'élément
+                            setEditableRecipe((prevRecipe) => ({
+                              ...prevRecipe,
+                              ingredients: updatedIngredients,
+                            }));
+                          }}
+                        >
+                          −
+                        </button>
+                        <input
+                          type="text"
+                          name={`ingredient-${index}`}
+                          value={ingredient || ''}
+                          onChange={(e) => {
+                            const updatedIngredients = [...editableRecipe.ingredients];
+                            updatedIngredients[index] = e.target.value;
+                            setEditableRecipe((prevRecipe) => ({
+                              ...prevRecipe,
+                              ingredients: updatedIngredients,
+                            }));
+                          }}
+                          className={styles.editableIngredientsInput}
+                        />
+                      </div>
                     ))
                   ) : (
-                    <li>Aucun ingrédient disponible</li>
-                  )}
-                </ul>
-
+                    <div>Aucun ingrédient disponible</div>
+                  )
+                )}
                 {isEditing && (
                   <button
                     className={styles.addButton}
@@ -350,53 +382,57 @@ function Home() {
               </div>
 
 
+
               <div className={styles.instructions}>
                 <h3 className={styles.sectionTitle}>Instructions</h3>
-                <ul className={styles.instructionsList}>
-                  {editableRecipe?.instructions && editableRecipe.instructions.length > 0 ? (
+                {!isEditing ? (
+                  <ul className={styles.instructionsList}>
+                    {selectedRecipe?.instructions && selectedRecipe.instructions.length > 0 ? (
+                      selectedRecipe.instructions.map((instruction, index) => (
+                        <li key={index} className={styles.instructionItem}>
+                          <span>{instruction}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li>Aucune instruction disponible</li>
+                    )}
+                  </ul>
+                ) : (
+                  editableRecipe?.instructions && editableRecipe.instructions.length > 0 ? (
                     editableRecipe.instructions.map((instruction, index) => (
-                      <li key={index} className={styles.instructionItem}>
-                        <div className={styles.instructionContainer}>
-                          {isEditing && (
-                            <button
-                              className={styles.deleteButton}
-                              onClick={() => {
-                                const updatedInstructions = editableRecipe.instructions.filter((_, i) => i !== index); // Supprimer l'instruction
-                                setEditableRecipe((prevRecipe) => ({
-                                  ...prevRecipe,
-                                  instructions: updatedInstructions,
-                                }));
-                              }}
-                            >
-                              −
-                            </button>
-                          )}
-                          {isEditing ? (
-                            <textarea
-                              type="text"
-                              name={`instruction-${index}`}
-                              value={instruction || ''}
-                              onChange={(e) => {
-                                const updatedInstructions = [...editableRecipe.instructions];
-                                updatedInstructions[index] = e.target.value;
-                                setEditableRecipe((prevRecipe) => ({
-                                  ...prevRecipe,
-                                  instructions: updatedInstructions,
-                                }));
-                              }}
-                              className={styles.editableInput}
-                            />
-                          ) : (
-                            <span>{instruction}</span>
-                          )}
-                        </div>
-                      </li>
+                      <div key={index} className={styles.instructionContainer}>
+                        <button
+                          className={styles.deleteButton}
+                          onClick={() => {
+                            const updatedInstructions = editableRecipe.instructions.filter((_, i) => i !== index); // Supprimer l'instruction
+                            setEditableRecipe((prevRecipe) => ({
+                              ...prevRecipe,
+                              instructions: updatedInstructions,
+                            }));
+                          }}
+                        >
+                          −
+                        </button>
+                        <textarea
+                          type="text"
+                          name={`instruction-${index}`}
+                          value={instruction || ''}
+                          onChange={(e) => {
+                            const updatedInstructions = [...editableRecipe.instructions];
+                            updatedInstructions[index] = e.target.value;
+                            setEditableRecipe((prevRecipe) => ({
+                              ...prevRecipe,
+                              instructions: updatedInstructions,
+                            }));
+                          }}
+                          className={styles.editableInput}
+                        />
+                      </div>
                     ))
                   ) : (
-                    <li>Aucune instruction disponible</li>
-                  )}
-
-                </ul>
+                    <div>Aucune instruction disponible</div>
+                  )
+                )}
                 {isEditing && (
                   <button
                     className={styles.addButton}
@@ -411,6 +447,7 @@ function Home() {
                   </button>
                 )}
               </div>
+
 
             </div>
 

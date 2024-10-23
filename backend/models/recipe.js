@@ -9,6 +9,7 @@ const RecipeSchema = mongoose.Schema({
   instructions: { type: [String], required: true },
   prep_time_minutes: { type: Number, required: false, default: null },
   cook_time: { type: Number, required: false, default: null },
+  total_time: { type: Number, required: false, default: null },
   num_servings: { type: Number, required: true, default: null },
   price: {
     total: { type: Number, required: true, default: null },

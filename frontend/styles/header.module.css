@@ -30,13 +30,35 @@
     font-weight: 600;
 }
 
-.name {
-    text-align: center;
-    flex-grow: 1;
-}
+
 
 .titleContainer {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
+}
+
+.buttons {
+    border-radius: 15px;
+    height: 40px;
+    width: 150px;
+    background-color: orange;
+    color: white;
+    border: 1px solid orange;
+    cursor: pointer;
+    margin: 10px;
+
+}
+
+.buttons:hover {
+    background-color: darkred;
+}
+
+.title {
+    background-color: rgb(255, 165, 0);
+    border: 1px solid black;
+    padding: 10px;
+    padding-left: 150px;
+    padding-right: 150px;
+    border-radius: 15px;
 }
