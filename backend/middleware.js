@@ -1,16 +1,17 @@
 const jwt = require('jsonwebtoken');
 
-// Middleware pour vérifier le token JWT
 const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = req.cookies.token;
 
     if (!token) {
-        return res.status(401).json({ message: 'Token manquant' });
+        return res.status(401).json({ message: 'Token manquant ou non fourni' });
     }
 
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
         if (err) {
+            if (err.name === 'TokenExpiredError') {
+                return res.status(401).json({ message: 'Token expiré, veuillez vous reconnecter' });
+            }
             return res.status(403).json({ message: 'Token invalide' });
         }
 

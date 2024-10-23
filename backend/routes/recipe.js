@@ -177,10 +177,10 @@ router.post('/like', async (req, res) => {
 });
 
 router.put('/update', async (req, res) => {
-  let { editableRecipe, username, token } = req.body;
+  let { editableRecipe, username } = req.body;
 
   try {
-    const findUser = await User.findOne({ username: username, token: token });
+    const findUser = await User.findOne({ username: username });
     if (!findUser) {
       return res.status(404).json({ message: "Utilisateur non trouvé" })
     }
@@ -222,10 +222,10 @@ router.put('/update', async (req, res) => {
 })
 
 router.delete('/delete', async (req, res) => {
-  let { recipe, username, token } = req.body;
+  let { recipe, username } = req.body;
   console.log(recipe.id_recipe_tasty)
   try {
-    const findUser = await User.findOne({ username: username, token: token });
+    const findUser = await User.findOne({ username: username });
     if (!findUser) {
       return res.status(404).json({ message: "Utilisateur non trouvé" })
     }

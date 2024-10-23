@@ -7,7 +7,6 @@ import { updateLike } from '../reducers/user';
 import Header from '../components/Header';
 import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Router } from 'next/router';
 
 function Home() {
   const [recipeList, setRecipeList] = useState([]);
@@ -23,7 +22,6 @@ function Home() {
 
   const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
-
   const fetchApiRecipes = async () => {
     const request = await fetch(`http://localhost:3000/recipe/${researchInput}/${page}`);
     const response = await request.json();
@@ -32,7 +30,14 @@ function Home() {
 
   const fetchUserLikedRecipes = async () => {
     try {
-      const request = await fetch(`http://localhost:3000/recipe/likeList/${user.username}`);
+      const request = await fetch(`http://localhost:3000/recipe/likeList/${user.username}`, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+      }
+      );
+
       const response = await request.json();
       setUserRecipeList([]);
       setIsOnPage("MyRecipes");
@@ -60,7 +65,6 @@ function Home() {
     setIsEditing(false); // Désactive le mode édition par défaut
   };
 
-
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedRecipe(null);
@@ -76,7 +80,10 @@ function Home() {
   const handleLike = async (recipe) => {
     const request = await fetch(`http://localhost:3000/recipe/like`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
       body: JSON.stringify({ recipe: recipe, username: user.username })
     });
     const response = await request.json();
@@ -108,15 +115,17 @@ function Home() {
     try {
       const request = await fetch(`http://localhost:3000/recipe/update`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ editableRecipe: editableRecipe, username: user.username, token: user.token }),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ editableRecipe: editableRecipe, username: user.username }),
       });
       const response = await request.json();
       if (response.success) {
         let updatedRecipeList = response.userId_recipe_tasty.filter(e => e !== editableRecipe.id_recipe_tasty);
 
-        console.log(updatedRecipeList)
-        // dispatch(updateLike(updatedRecipeList)); // Met à jour les recettes aimées
+        dispatch(updateLike(updatedRecipeList)); // Met à jour les recettes aimées
         setSelectedRecipe(editableRecipe); // Met à jour la recette avec les modifications
         setIsEditing(false); // Désactive le mode édition après la sauvegarde
       }
@@ -131,11 +140,13 @@ function Home() {
   };
 
   const deleteRecipe = async (recipe) => {
-    console.log("coucou")
     const request = await fetch(`http://localhost:3000/recipe/delete`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recipe: recipe, username: user.username, token: user.token }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ recipe: recipe, username: user.username }),
     });
     const response = await request.json();
     dispatch(updateLike(response.userLikedRecipes));
