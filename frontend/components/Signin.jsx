@@ -25,7 +25,7 @@ function SignIn() {
 
 
     const submitSignin = async () => {
-        const request = await fetch("http://localhost:3000/users/signIn", {
+        const request = await fetch("https://food-helper-o7y8.vercel.app/users/signIn", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', },
             body: JSON.stringify(formData)

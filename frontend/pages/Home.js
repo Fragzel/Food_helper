@@ -23,14 +23,14 @@ function Home() {
   const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const fetchApiRecipes = async () => {
-    const request = await fetch(`http://localhost:3000/recipe/${researchInput}/${page}`);
+    const request = await fetch(`https://food-helper-o7y8.vercel.app/recipe/${researchInput}/${page}`);
     const response = await request.json();
     response && setRecipeList(response);
   };
 
   const fetchUserLikedRecipes = async () => {
     try {
-      const request = await fetch(`http://localhost:3000/recipe/likeList/${user.username}`, {
+      const request = await fetch(`https://food-helper-o7y8.vercel.app/recipe/likeList/${user.username}`, {
         headers: {
           'Content-Type': 'application/json'
         },
@@ -78,7 +78,7 @@ function Home() {
   };
 
   const handleLike = async (recipe) => {
-    const request = await fetch(`http://localhost:3000/recipe/like`, {
+    const request = await fetch(`https://food-helper-o7y8.vercel.app/recipe/like`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -113,7 +113,7 @@ function Home() {
   const handleSaveRecipe = async () => {
     // Enregistrer les modifications dans le backend
     try {
-      const request = await fetch(`http://localhost:3000/recipe/update`, {
+      const request = await fetch(`https://food-helper-o7y8.vercel.app/recipe/update`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -140,7 +140,7 @@ function Home() {
   };
 
   const deleteRecipe = async (recipe) => {
-    const request = await fetch(`http://localhost:3000/recipe/delete`, {
+    const request = await fetch(`https://food-helper-o7y8.vercel.app/recipe/delete`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

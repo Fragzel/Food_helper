@@ -34,7 +34,7 @@ function SignUp() {
 
     const submitSignup = async () => {
         try {
-            const request = await fetch("http://localhost:3000/users/signUp", {
+            const request = await fetch("https://food-helper-o7y8.vercel.app/users/signUp", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
