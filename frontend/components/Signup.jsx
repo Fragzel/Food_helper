@@ -4,6 +4,7 @@ import { Input } from "../components/Input";
 import { useDispatch } from 'react-redux';
 import { updateUserRedux } from '../reducers/user';
 import { useRouter } from 'next/router';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
 const signUpFields = [
     {
@@ -34,7 +35,7 @@ function SignUp() {
 
     const submitSignup = async () => {
         try {
-            const request = await fetch("https://food-helper-o7y8.vercel.app/users/signUp", {
+            const request = await fetch(`${siteUrl}users/signUp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

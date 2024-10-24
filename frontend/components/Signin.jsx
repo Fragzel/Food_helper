@@ -5,6 +5,8 @@ import { useDispatch } from 'react-redux';
 import { updateUserRedux } from '../reducers/user';
 import { useRouter } from 'next/router';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
 const signInFields = [
     {
         name: "username",
@@ -25,7 +27,7 @@ function SignIn() {
 
 
     const submitSignin = async () => {
-        const request = await fetch("https://food-helper-o7y8.vercel.app/users/signIn", {
+        const request = await fetch(`${siteUrl}users/signIn`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', },
             body: JSON.stringify(formData)
