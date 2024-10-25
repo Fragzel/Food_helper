@@ -3,7 +3,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 require('dotenv').config();
-require('./models/connection');  // Connexion à la base de données
+require('./models/connection');
 const { authenticateToken } = require('./middleware');
 
 var indexRouter = require('./routes/index');
@@ -24,7 +24,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Middleware pour exclure /signin et /signup de l'authentification
 app.use((req, res, next) => {
     if (req.path === '/users/signIn' || req.path === '/users/signUp') {
 

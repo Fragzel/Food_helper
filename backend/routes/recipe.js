@@ -17,7 +17,7 @@ router.get('/likeList/:username', async (req, res) => {
       res.json({ response: 'No recipes found' });
     }
   } catch (error) {
-    console.error('Erreur :', error); // Log error
+    console.error('Erreur :', error);
     res.status(500).json({ message: 'Une erreur est survenue' });
   }
 });
@@ -50,7 +50,6 @@ router.get('/:research/:page', async (req, res) => {
     } else {
       for (const recipe of response.results) {
 
-        // Liste des ingrédients avec leurs dosages
         let ingredientsList = [];
         if (recipe.sections && recipe.sections.length > 0) {
           recipe.sections.forEach(section => {
@@ -66,13 +65,11 @@ router.get('/:research/:page', async (req, res) => {
                 return 'Quantité non spécifiée';
               }).join(', ');
 
-              // Combine ingredient and measurements
               ingredientsList.push(`${ingredientName}: ${measurements}`);
             });
           });
         }
 
-        // Étapes de préparation
         let instructionsList = [];
         if (recipe.instructions && recipe.instructions.length > 0) {
           recipe.instructions.forEach((instruction, index) => {
@@ -80,7 +77,6 @@ router.get('/:research/:page', async (req, res) => {
           });
         }
 
-        // Construire l'objet de la recette
         recipesInfos.push({
           id_recipe_tasty: recipe.id,
           name: recipe.name,
@@ -98,7 +94,6 @@ router.get('/:research/:page', async (req, res) => {
         });
       }
 
-      // Retourner la liste des recettes
       return res.json(recipesInfos);
     }
 
@@ -116,7 +111,7 @@ router.post('/like', async (req, res) => {
 
     let savedRecipe;
     if (existingRecipe) {
-      savedRecipe = existingRecipe; // Utiliser la recette existante
+      savedRecipe = existingRecipe;
     } else {
       const newRecipe = new Recipe({
         id_recipe_tasty: recipe.id_recipe_tasty,
@@ -133,7 +128,7 @@ router.post('/like', async (req, res) => {
           portion: recipe.price.portion,
         },
       });
-      savedRecipe = await newRecipe.save(); // Sauvegarder la nouvelle recette
+      savedRecipe = await newRecipe.save();
     }
 
     const findUser = await User.findOne({ username: username });

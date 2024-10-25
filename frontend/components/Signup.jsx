@@ -43,14 +43,12 @@ function SignUp() {
             const response = await request.json();
 
             if (response.result) {
-                // Mise à jour de l'utilisateur dans Redux
                 dispatch(updateUserRedux({
                     token: response.token,
                     username: formData.username,
                     likedRecipes: []
                 }));
 
-                // Redirection vers la page /home
                 router.push("/Home");
             } else {
                 console.error("Erreur lors de la création du compte", response.error);

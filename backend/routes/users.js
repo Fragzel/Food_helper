@@ -29,7 +29,7 @@ router.post('/signUp', async (req, res) => {
 
     res.cookie('token', token, {
         httpOnly: true,
-        secure: true,
+        secure: false,
         sameSite: 'none',
         maxAge: 15 * 60 * 1000
     });
@@ -40,22 +40,18 @@ router.post('/signUp', async (req, res) => {
 router.post("/signIn", async (req, res) => {
     const { username, password } = req.body;
 
-    // Vérifier si l'utilisateur existe
     let user = await User.findOne({ username });
     if (!user) {
         return res.status(401).json({ message: "Nom d'utilisateur ou mot de passe incorrect" });
     }
 
-    // Vérifier la validité du mot de passe
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
         return res.status(401).json({ message: "Nom d'utilisateur ou mot de passe incorrect" });
     }
 
-    // Générer un nouveau token JWT
     const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '15min' });
 
-    // Envoyer le token dans un cookie sécurisé
     res.cookie('token', token, {
         httpOnly: true,
         secure: false,

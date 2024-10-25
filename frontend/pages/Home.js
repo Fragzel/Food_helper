@@ -13,13 +13,13 @@ function Home() {
   const [recipeList, setRecipeList] = useState([]);
   const [userRecipeList, setUserRecipeList] = useState([])
   const [researchInput, setResearchInput] = useState('');
-  const [selectedRecipe, setSelectedRecipe] = useState(null); // Utilisé pour afficher la recette sélectionnée
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [isFirstRender, setIsFirstRender] = useState(true);
   const [isOnPage, setIsOnPage] = useState("Home");
-  const [isEditing, setIsEditing] = useState(false); // Gérer le mode édition
-  const [editableRecipe, setEditableRecipe] = useState(null); // Gérer les champs modifiables
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableRecipe, setEditableRecipe] = useState(null);
 
   const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
@@ -60,10 +60,10 @@ function Home() {
   };
 
   const openModal = (recipe) => {
-    setSelectedRecipe(recipe); // Définit la recette sélectionnée pour l'affichage en lecture
-    setEditableRecipe({ ...recipe }); // Initialise les champs modifiables avec les données de la recette
+    setSelectedRecipe(recipe);
+    setEditableRecipe({ ...recipe });
     setIsModalOpen(true);
-    setIsEditing(false); // Désactive le mode édition par défaut
+    setIsEditing(false);
   };
 
   const closeModal = () => {
@@ -112,7 +112,6 @@ function Home() {
   };
 
   const handleSaveRecipe = async () => {
-    // Enregistrer les modifications dans le backend
     try {
       const request = await fetch(`${siteUrl}recipe/update`, {
         method: 'PUT',
@@ -126,9 +125,9 @@ function Home() {
       if (response.success) {
         let updatedRecipeList = response.userId_recipe_tasty.filter(e => e !== editableRecipe.id_recipe_tasty);
 
-        dispatch(updateLike(updatedRecipeList)); // Met à jour les recettes aimées
-        setSelectedRecipe(editableRecipe); // Met à jour la recette avec les modifications
-        setIsEditing(false); // Désactive le mode édition après la sauvegarde
+        dispatch(updateLike(updatedRecipeList));
+        setSelectedRecipe(editableRecipe);
+        setIsEditing(false);
       }
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error);
@@ -136,8 +135,8 @@ function Home() {
   };
 
   const personnalRecipe = () => {
-    setEditableRecipe({ ...selectedRecipe }); // Cloner la recette actuelle pour l'édition
-    setIsEditing(true); // Activer le mode édition
+    setEditableRecipe({ ...selectedRecipe });
+    setIsEditing(true);
   };
 
   const deleteRecipe = async (recipe) => {
@@ -180,8 +179,8 @@ function Home() {
         <div className={styles.content}>
           {userRecipeList !== "No recipes found"
             ? userRecipeList
-              .slice()  // Créer une copie de la liste pour ne pas muter l'original
-              .reverse()  // Inverser l'ordre des recettes
+              .slice()
+              .reverse()
               .map((recipe, i) => (
                 <Recipe
                   key={i}
@@ -349,7 +348,7 @@ function Home() {
                         <button
                           className={styles.deleteButton}
                           onClick={() => {
-                            const updatedIngredients = editableRecipe.ingredients.filter((_, i) => i !== index); // Supprimer l'élément
+                            const updatedIngredients = editableRecipe.ingredients.filter((_, i) => i !== index);
                             setEditableRecipe((prevRecipe) => ({
                               ...prevRecipe,
                               ingredients: updatedIngredients,
@@ -384,7 +383,7 @@ function Home() {
                     onClick={() => {
                       setEditableRecipe((prevRecipe) => ({
                         ...prevRecipe,
-                        ingredients: [...(prevRecipe.ingredients || []), ''], // Ajouter un ingrédient vide
+                        ingredients: [...(prevRecipe.ingredients || []), ''],
                       }));
                     }}
                   >
@@ -416,7 +415,7 @@ function Home() {
                         <button
                           className={styles.deleteButton}
                           onClick={() => {
-                            const updatedInstructions = editableRecipe.instructions.filter((_, i) => i !== index); // Supprimer l'instruction
+                            const updatedInstructions = editableRecipe.instructions.filter((_, i) => i !== index);
                             setEditableRecipe((prevRecipe) => ({
                               ...prevRecipe,
                               instructions: updatedInstructions,
@@ -451,7 +450,7 @@ function Home() {
                     onClick={() => {
                       setEditableRecipe((prevRecipe) => ({
                         ...prevRecipe,
-                        instructions: [...(prevRecipe.instructions || []), ''], // Ajouter une instruction vide
+                        instructions: [...(prevRecipe.instructions || []), ''],
                       }));
                     }}
                   >
